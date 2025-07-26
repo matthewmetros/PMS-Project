@@ -46,6 +46,11 @@ export interface QueryResult {
   count: number;
   data: Record<string, any>[];
   executionTime: string;
+  metadata?: {
+    endpoint: string;
+    params?: Record<string, any>;
+    timestamp: string;
+  };
 }
 
 export interface QueryHistoryEntry {

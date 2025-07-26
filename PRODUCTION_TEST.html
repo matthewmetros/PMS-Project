@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMS Inspector - Production Test (Hospitable API)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .header { background: white; border-radius: 0.5rem; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .title { font-size: 2rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem; }
+        .subtitle { color: #6b7280; margin-bottom: 2rem; }
+        .warning { background: #fef3cd; border: 1px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-bottom: 2rem; }
+        .warning-title { font-weight: 600; color: #92400e; margin-bottom: 0.5rem; }
+        .warning-text { color: #92400e; font-size: 0.875rem; }
+        .form-section { background: white; border-radius: 0.5rem; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .form-title { font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem; }
+        .input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
+        .input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .select { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; background: white; }
+        .textarea { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; font-family: 'SF Mono', Monaco, monospace; min-height: 6rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .status { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; }
+        .status-disconnected { background: #fef2f2; color: #b91c1c; }
+        .status-connecting { background: #fef3cd; color: #92400e; }
+        .status-connected { background: #f0fdf4; color: #166534; }
+        .status-error { background: #fef2f2; color: #b91c1c; }
+        .results { background: white; border-radius: 0.5rem; padding: 2rem; margin-top: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .results-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1rem; }
+        .error { background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; padding: 1rem; color: #b91c1c; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th { background: #f9fafb; padding: 0.75rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
+        .table td { padding: 0.75rem; font-size: 0.875rem; color: #111827; border-bottom: 1px solid #e5e7eb; }
+        .table tr:hover { background: #f9fafb; }
+        .help-text { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+        .code { font-family: 'SF Mono', Monaco, monospace; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; }
+        .loading { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">PMS Inspector - Production Test</h1>
+            <p class="subtitle">Test your optimized PMS Inspector with real Hospitable API</p>
+            
+            <div class="warning">
+                <div class="warning-title">⚠️ Production Testing</div>
+                <div class="warning-text">
+                    This will make real API calls to Hospitable. Make sure you have:
+                    <br>• A valid Hospitable API token
+                    <br>• Proper CORS settings if testing from a different domain
+                    <br>• Understanding that this will consume your API rate limits
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="form-title">API Configuration</h2>
+            
+            <div class="form-group">
+                <label class="label">Platform</label>
+                <select class="select" id="platformSelect">
+                    <option value="hospitable">Hospitable (Recommended for testing)</option>
+                    <option value="guesty">Guesty</option>
+                    <option value="ownerrez">OwnerRez</option>
+                    <option value="hostaway">Hostaway</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="label">API Token</label>
+                <input type="password" class="input" id="apiToken" placeholder="Enter your API token..." />
+                <div class="help-text">Get your token from your Hospitable account settings</div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Connection Status</label>
+                <div class="status status-disconnected" id="connectionStatus">
+                    <span>●</span> Disconnected
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="testConnection()" id="connectBtn">
+                Test Connection
+            </button>
+        </div>
+
+        <div class="form-section" id="querySection" style="display: none;">
+            <h2 class="form-title">API Query Builder</h2>
+            
+            <div class="form-group">
+                <label class="label">Endpoint</label>
+                <select class="select" id="endpointSelect">
+                    <option value="/properties">Properties - Get all properties</option>
+                    <option value="/reservations">Reservations - Get all bookings</option>
+                    <option value="/guests">Guests - Get all guests</option>
+                    <option value="/messages">Messages - Get guest messages</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Query Parameters</label>
+                <textarea class="textarea" id="queryParams" placeholder="limit=10&status=active">limit=10</textarea>
+                <div class="help-text">Enter parameters in URL format: key=value&key2=value2</div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Full Query</label>
+                <div class="code" id="fullQuery">GET /properties?limit=10</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="executeQuery()" id="executeBtn">
+                Execute Query
+            </button>
+            
+            <button class="btn btn-secondary" onclick="clearResults()">
+                Clear Results
+            </button>
+        </div>
+
+        <div class="results" id="resultsSection" style="display: none;">
+            <h3 class="results-title">Query Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let apiClient = null;
+        let connectionStatus = 'disconnected';
+
+        // API Client Class
+        class ApiClient {
+            constructor(platform, token) {
+                this.platform = platform;
+                this.token = token;
+                this.baseUrls = {
+                    hospitable: 'https://api.hospitable.com/v1',
+                    guesty: 'https://api.guesty.com/api/v2',
+                    ownerrez: 'https://api.ownerreservations.com/v2',
+                    hostaway: 'https://api.hostaway.com/v1'
+                };
+            }
+
+            async request(endpoint, params = {}) {
+                const url = new URL(endpoint, this.baseUrls[this.platform]);
+                
+                // Add query parameters
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                        url.searchParams.append(key, String(value));
+                    }
+                });
+
+                const response = await fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage;
+                    
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.message || errorJson.error || `HTTP ${response.status}: ${response.statusText}`;
+                    } catch {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+
+                return await response.json();
+            }
+
+            async testConnection() {
+                try {
+                    await this.request('/properties', { limit: 1 });
+                    return true;
+                } catch (error) {
+                    console.error('Connection test failed:', error);
+                    throw error;
+                }
+            }
+        }
+
+        function updateConnectionStatus(status, message = '') {
+            connectionStatus = status;
+            const statusEl = document.getElementById('connectionStatus');
+            const querySection = document.getElementById('querySection');
+            
+            statusEl.className = `status status-${status}`;
+            
+            switch(status) {
+                case 'disconnected':
+                    statusEl.innerHTML = '<span>●</span> Disconnected';
+                    querySection.style.display = 'none';
+                    break;
+                case 'connecting':
+                    statusEl.innerHTML = '<span>●</span> Connecting...';
+                    querySection.style.display = 'none';
+                    break;
+                case 'connected':
+                    statusEl.innerHTML = '<span>●</span> Connected';
+                    querySection.style.display = 'block';
+                    break;
+                case 'error':
+                    statusEl.innerHTML = `<span>●</span> Error: ${message}`;
+                    querySection.style.display = 'none';
+                    break;
+            }
+        }
+
+        async function testConnection() {
+            const platform = document.getElementById('platformSelect').value;
+            const token = document.getElementById('apiToken').value;
+            const connectBtn = document.getElementById('connectBtn');
+
+            if (!token) {
+                alert('Please enter your API token');
+                return;
+            }
+
+            updateConnectionStatus('connecting');
+            connectBtn.disabled = true;
+            connectBtn.textContent = 'Testing...';
+
+            try {
+                apiClient = new ApiClient(platform, token);
+                await apiClient.testConnection();
+                updateConnectionStatus('connected');
+                connectBtn.textContent = 'Connected ✓';
+                setTimeout(() => {
+                    connectBtn.textContent = 'Test Connection';
+                    connectBtn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                updateConnectionStatus('error', error.message);
+                connectBtn.textContent = 'Test Connection';
+                connectBtn.disabled = false;
+                
+                // Show detailed error
+                showResults({
+                    success: false,
+                    error: error.message,
+                    details: 'Make sure your API token is valid and has the necessary permissions. Check browser console for more details.'
+                });
+            }
+        }
+
+        function updateFullQuery() {
+            const endpoint = document.getElementById('endpointSelect').value;
+            const params = document.getElementById('queryParams').value;
+            const fullQuery = `GET ${endpoint}${params ? '?' + params : ''}`;
+            document.getElementById('fullQuery').textContent = fullQuery;
+        }
+
+        async function executeQuery() {
+            if (!apiClient || connectionStatus !== 'connected') {
+                alert('Please connect to the API first');
+                return;
+            }
+
+            const endpoint = document.getElementById('endpointSelect').value;
+            const paramsText = document.getElementById('queryParams').value;
+            const executeBtn = document.getElementById('executeBtn');
+
+            // Parse parameters
+            const params = {};
+            if (paramsText) {
+                const urlParams = new URLSearchParams(paramsText);
+                urlParams.forEach((value, key) => {
+                    if (value === 'true') params[key] = true;
+                    else if (value === 'false') params[key] = false;
+                    else if (!isNaN(Number(value)) && value !== '') params[key] = Number(value);
+                    else params[key] = value;
+                });
+            }
+
+            executeBtn.disabled = true;
+            executeBtn.textContent = 'Executing...';
+            document.querySelector('.form-section').classList.add('loading');
+
+            const startTime = Date.now();
+
+            try {
+                const response = await apiClient.request(endpoint, params);
+                const executionTime = Date.now() - startTime;
+
+                // Handle different response formats
+                let data = [];
+                let count = 0;
+
+                if (Array.isArray(response)) {
+                    data = response;
+                    count = response.length;
+                } else if (response && typeof response === 'object') {
+                    if (response.data && Array.isArray(response.data)) {
+                        data = response.data;
+                        count = response.total || response.count || response.data.length;
+                    } else if (response.results && Array.isArray(response.results)) {
+                        data = response.results;
+                        count = response.total || response.count || response.results.length;
+                    } else {
+                        data = [response];
+                        count = 1;
+                    }
+                }
+
+                showResults({
+                    success: true,
+                    data,
+                    count,
+                    executionTime: `${executionTime}ms`,
+                    endpoint,
+                    params
+                });
+
+            } catch (error) {
+                showResults({
+                    success: false,
+                    error: error.message,
+                    endpoint,
+                    params
+                });
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.textContent = 'Execute Query';
+                document.querySelector('.form-section').classList.remove('loading');
+            }
+        }
+
+        function showResults(result) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            resultsSection.style.display = 'block';
+
+            if (!result.success) {
+                resultsContent.innerHTML = `
+                    <div class="error">
+                        <strong>Query Failed:</strong> ${result.error}
+                        ${result.details ? `<br><small>${result.details}</small>` : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            const metadata = `
+                <p><strong>Endpoint:</strong> ${result.endpoint}</p>
+                <p><strong>Parameters:</strong> ${JSON.stringify(result.params || {})}</p>
+                <p><strong>Results:</strong> ${result.count} records</p>
+                <p><strong>Execution Time:</strong> ${result.executionTime}</p>
+            `;
+
+            if (!result.data || result.data.length === 0) {
+                resultsContent.innerHTML = metadata + '<p><em>No data returned</em></p>';
+                return;
+            }
+
+            // Create table
+            const keys = Object.keys(result.data[0]);
+            const tableHeaders = keys.map(key => `<th>${key}</th>`).join('');
+            const tableRows = result.data.slice(0, 10).map(row => 
+                `<tr>${keys.map(key => `<td>${JSON.stringify(row[key]) || ''}</td>`).join('')}</tr>`
+            ).join('');
+
+            resultsContent.innerHTML = `
+                ${metadata}
+                ${result.count > 10 ? `<p><em>Showing first 10 of ${result.count} results</em></p>` : ''}
+                <table class="table">
+                    <thead><tr>${tableHeaders}</tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            `;
+        }
+
+        function clearResults() {
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+
+        // Event listeners
+        document.getElementById('endpointSelect').addEventListener('change', updateFullQuery);
+        document.getElementById('queryParams').addEventListener('input', updateFullQuery);
+
+        // Initialize
+        updateFullQuery();
+    </script>
+</body>
+</html>
